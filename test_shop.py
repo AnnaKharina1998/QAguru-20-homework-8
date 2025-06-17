@@ -3,7 +3,7 @@
 """
 import pytest
 
-from models import Product
+from models import Product, Cart
 
 
 @pytest.fixture
@@ -58,3 +58,93 @@ class TestCart:
         На некоторые методы у вас может быть несколько тестов.
         Например, негативные тесты, ожидающие ошибку (используйте pytest.raises, чтобы проверить это)
     """
+
+    @pytest.fixture
+    def product_1(self):
+        return Product("book", 500, "This is a book", 100)
+    @pytest.fixture
+    def product_2(self):
+        return Product("condenced_milk", 120, "This is a can of condenced_milk", 1000)
+
+
+    @pytest.fixture
+    def cart(self):
+        return Cart()
+
+    # Тесты метода Cart.add_product()
+    def test_add_default_product_empty_cart(self, cart: Cart, product_1):
+        cart.add_product(product_1)
+        assert cart.products == {product_1: 1}
+
+    def test_add_product_not_empty_cart(self, cart, product_1, product_2):
+        cart.add_product(product_1, 1)
+        cart.add_product(product_2, 2)
+        assert cart.products == {product_1: 1, product_2: 2}
+
+    def test_add_product_product_already_in_cart(self, cart, product_1):
+        cart.add_product(product_1, 2)
+        cart.add_product(product_1, 3)
+        assert cart.products == {product_1: 5}
+
+    def test_add_product_more_then_we_have(self, cart, product_1):
+        with pytest.raises(ValueError):
+            cart.add_product(product_1, product_1.quantity + 1)
+        assert cart.products == {}
+
+    #тесты метода Cart.remove_product()
+
+    def test_remove_product_remove_small_amount(self, cart, product_1):
+        cart.add_product(product_1, 10)
+        cart.remove_product(product_1, 1)
+        assert cart.products == {product_1: 9}
+
+    def test_remove_product_remove_all(self, cart, product_1):
+        cart.add_product(product_1, 10)
+        cart.remove_product(product_1, 10)
+        assert cart.products == {}
+
+    def test_remove_product_remove_more(self, cart, product_1):
+        cart.add_product(product_1, 10)
+        cart.remove_product(product_1, 11)
+        assert cart.products == {}
+
+    def test_remove_product_default(self, cart, product_1):
+        cart.add_product(product_1, 10)
+        cart.remove_product(product_1)
+        assert cart.products == {}
+
+    def test_remove_product_not_in_the_cart(self, cart, product_1):
+        with pytest.raises(ValueError):
+            cart.remove_product(product_1)
+
+    # тесты метода Cart.clear()
+    def test_clear_not_empty_cart(self, cart, product_1):
+        cart.add_product(product_1, 10)
+        cart.clear()
+        assert cart.products == {}
+
+    def test_clear_empty_cart(self, cart):
+        cart.clear()
+        assert cart.products == {}
+
+    # тесты метода Cart.get_total_price()
+
+    def test_get_total_price_empty_cart(self, cart):
+        assert cart.get_total_price() == 0.0
+
+    def test_get_total_price_not_empty_cart(self, cart, product_1, product_2):
+        cart.add_product(product_1, 5)
+        cart.add_product(product_2, 3)
+        assert cart.get_total_price() == product_1.price * 5 + product_2.price * 3
+
+    # тесты метода Cart.buy()
+
+    def test_buy_not_empty_cart(self, cart, product_1, product_2):
+        product_1_initial_quantity = product_1.quantity
+        product_2_initial_quantity = product_2.quantity
+        cart.add_product(product_1, 5)
+        cart.add_product(product_2, 3)
+        cart.buy()
+        assert product_1.quantity == product_1_initial_quantity - 5
+        assert product_2.quantity == product_2_initial_quantity - 3
+        assert cart.products == {}

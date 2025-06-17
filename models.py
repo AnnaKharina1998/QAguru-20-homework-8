@@ -18,11 +18,7 @@ class Product:
         Верните True если количество продукта больше или равно запрашиваемому
             и False в обратном случае
         """
-        if self.quantity >= quantity:
-            return True
-        else:
-            return False
-
+        return True if self.quantity >= quantity else False
 
     def buy(self, quantity):
         """
@@ -55,19 +51,18 @@ class Cart:
         # По-умолчанию корзина пустая
         self.products = {}
 
-    def add_product(self, product: Product, buy_count=1):
+    def add_product(self, product: Product, buy_count: int = 1):
         """
         Метод добавления продукта в корзину.
         Если продукт уже есть в корзине, то увеличиваем количество
         """
         if product.check_quantity(buy_count):
-            if product in self.products:
+            if product in self.products.keys():
                 self.products[product] += buy_count
             else:
                 self.products[product] = buy_count
         else:
             raise ValueError
-
 
     def remove_product(self, product: Product, remove_count=None):
         """
@@ -75,13 +70,13 @@ class Cart:
         Если remove_count не передан, то удаляется вся позиция
         Если remove_count больше, чем количество продуктов в позиции, то удаляется вся позиция
         """
-        if product not in self.products:
-            return NoSuchProductError
-        else:
+        if product in self.products.keys():
             if remove_count is None or remove_count >= self.products[product]:
                 del self.products[product]
             else:
                 self.products[product] -= remove_count
+        else:
+            raise ValueError
 
     def clear(self):
         self.products = {}
@@ -103,4 +98,4 @@ class Cart:
                 product.buy(count)
             else:
                 raise ValueError
-
+        self.clear()
